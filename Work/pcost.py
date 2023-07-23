@@ -6,10 +6,10 @@ import sys
 
 
 def portfolio_cost(filename):
+    ''' Computes the total cost (shares * price) of a portfolio file'''
     total_cost = 0
     try:
         with open(filename, 'rt') as f:
-
             next(f)  # Skipping the headers
             for line in f:
                 row = line.split(',')
@@ -27,5 +27,5 @@ if len(sys.argv) == 2:
     filename = sys.argv[1]
 else:
     filename = 'Data/portfolio.csv'
+
 cost = portfolio_cost(filename)
-print('Total cost:', cost)
