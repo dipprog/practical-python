@@ -1,11 +1,10 @@
 import csv
 
 
-def read_prices(filename: str) -> dict:
+def read_prices(file):
     '''
     Read prices from a CSV file of name, price data
     '''
-    with open(filename, 'rt') as f:
-        rows = csv.reader(f)
-        prices = {name: float(price) for name, price in rows}
+    rows = csv.reader(file)
+    prices = {name: float(price) for name, price in rows}
     return prices

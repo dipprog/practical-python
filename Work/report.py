@@ -1,73 +1,77 @@
 # report.py
-#
-# Exercise 2.4
 
-import csv
-
-from prices import read_prices
+import fileparse
+import stock
+import tableformat
 
 
 def read_portfolio(filename):
     '''
-    Open a stock portfolio file into a list of dictionaries with keys name, shares and price.
+    Read a stock portfolio file into a list of dictionaries with keys
+    name, shares, and price.
     '''
-    portfolio = []
+    with open(filename) as lines:
+        portdicts = fileparse.parse_csv(
+            lines, select=['name', 'shares', 'price'], types=[str, int, float])
 
-    with open(filename) as f:
-        rows = csv.reader(f)
-        headers = next(rows)
-
-        for row in rows:
-            record = dict(zip(headers, row))
-            stock = {
-                'name': record['name'],
-                'shares': int(record['shares']),
-                'price': float(record['price'])
-            }
-            portfolio.append(stock)
-    return portfolio
+        return [stock.Stock(d['name'], d['shares'], d['price']) for d in portdicts]
 
 
-def make_report(portfolio, prices):
+def read_prices(filename):
     '''
-    Return a list of tuple of stock portfolio report having keys name, shares, current_price, change_price
+    Read a CSV file of price data into a dict mapping names to prices.
     '''
-    portfolio_report = []
+    with open(filename) as lines:
+        return dict(fileparse.parse_csv(lines, types=[str, float], has_headers=False))
+
+
+def make_report_data(portfolio, prices):
+    '''
+    Make a list of (name, shares, price, change) tuples given a portfolio list
+    and prices dictionary.
+    '''
+    rows = []
     for stock in portfolio:
-        name = stock['name']
-        shares = stock['shares']
-        current_price = prices[stock['name']]
-        change_price = current_price - stock['price']
-        portfolio_report.append((name, shares, current_price, change_price))
-    return portfolio_report
+        current_price = prices[stock.name]
+        change = current_price - stock.price
+        summary = (stock.name, stock.shares, current_price, change)
+        rows.append(summary)
+    return rows
 
 
-def print_report(report):
-    headers = ('Name', 'Shares', 'Price', 'Change')
-    print('%10s %10s %10s %10s' % headers)
-    print(('-' * 10 + ' ') * len(headers))
-    for name, shares, price, change in report:
-        price_f = '$' + f'{price:0.2f}'
-        print(f'{name:>10s} {shares:>10d} {price_f:>10s} {change:>10.2f}')
+def print_report(reportdata, formatter):
+    '''
+    Print a nicely formated table from a list of (name, shares, price, change) tuples.
+    '''
+    formatter.headings(['Name', 'Shares', 'Price', 'Change'])
+
+    for name, shares, price, change in reportdata:
+        rowdata = [name, str(shares), f'{price:0.2f}', f'{change:0.2f}']
+        formatter.row(rowdata)
 
 
-def print_loss_gain(portfolio, prices, pcost):
-    current_value = 0.0
-    for stock in portfolio:
-        if stock['name'] in prices.keys():
-            current_value += int(stock['shares']) * prices[stock['name']]
+def portfolio_report(portfoliofile, pricefile, fmt='txt'):
+    '''
+    Make a stock report given portfolio and price data files.
+    '''
+    # Read data files
+    portfolio = read_portfolio(portfoliofile)
+    prices = read_prices(pricefile)
 
-    print("Portfolio Total Cost:", pcost)
-    print("Current Value:", current_value)
-    print(f"Gain/Loss: {(current_value-pcost):0.2f}",)
+    # Create the report data
+    report = make_report_data(portfolio, prices)
 
-
-def portfolio_report(portfolio_filename, prices_filename):
-    portfolio = read_portfolio(portfolio_filename)
-    prices = read_prices(prices_filename)
-    report = make_report(portfolio, prices)
-    print_report(report)
+    # Print it out
+    formatter = tableformat.create_formatter(fmt)
+    print_report(report, formatter)
 
 
-if __name__ == "__main__":
-    portfolio_report('Data/portfolio.csv', 'Data/prices.csv')
+def main(args):
+    if len(args) != 4:
+        raise SystemExit('Usage: %s portfile pricefile output_format' % args[0])
+    portfolio_report(args[1], args[2], args[3])
+
+
+if __name__ == '__main__':
+    import sys
+    main(sys.argv)
