@@ -1,0 +1,22 @@
+# test_simple.py
+
+import simple
+import unittest
+
+# Inherits from unittest.TestCase
+# The testing class must inherit from unittest.TestCase.
+class TestAdd(unittest.TestCase):
+    # Each method must start with 'test'
+    def test_simple(self):
+        # Test with simple integer arguments
+        r = simple.add(2,5)
+        self.assertEqual(r, 6)
+
+    def test_str(self):
+        # Test  with strings
+        r = simple.add('hello', 'world')
+        self.assertEqual(r, 'helloworld')
+
+    
+if __name__ == '__main__':
+    unittest.main()

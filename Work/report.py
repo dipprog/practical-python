@@ -4,6 +4,13 @@ import fileparse
 from stock import Stock
 import tableformat
 from portfolio import Portfolio
+import logging
+
+logging.basicConfig(
+    filename = 'report.log',
+    filemode = 'a',
+    level    = logging.WARNING
+)
 
 
 def read_portfolio(filename, **opts):
@@ -12,12 +19,7 @@ def read_portfolio(filename, **opts):
     name, shares, and price.
     '''
     with open(filename) as lines:
-        portdicts = fileparse.parse_csv(
-            lines, select=['name', 'shares', 'price'], types=[str, int, float], **opts)
-
-    portfolio =  [ Stock(**d) for d in portdicts ]
-    return Portfolio(portfolio)
-
+        return Portfolio.from_csv(lines)
 
 def read_prices(filename):
     '''
